@@ -21,11 +21,15 @@ import com.muyu.interview.model.vo.LoginUserVO;
 import com.muyu.interview.model.vo.UserVO;
 import com.muyu.interview.service.UserService;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import me.chanjar.weixin.common.bean.oauth2.WxOAuth2AccessToken;
@@ -316,5 +320,33 @@ public class UserController {
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 添加用户签到记录
+     *
+     * @param request
+     * @return 当前是否已签到成功
+     */
+    @ApiOperation(value = "添加用户签到记录",notes = "添加用户签到记录",httpMethod = "POST")
+    @PostMapping("/add/sign_in")
+    public BaseResponse<Boolean> addUserSignIn(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        Boolean result = userService.addUserSignin(loginUser.getId());
+        return ResultUtils.success(result);
+    }
+
+    /**获取用户签到记录
+     *
+     * @param year 年份（为空表示当前年份）
+     * @param request
+     * @return 签到记录映射
+     */
+    @ApiOperation(value = "获取用户签到记录",notes = "获取用户签到记录",httpMethod = "GET")
+    @GetMapping("/get/sign_in")
+    public BaseResponse<ArrayList<Integer>> getUserSignInRecord(int year,HttpServletRequest request){
+        User loginUser = userService.getLoginUser(request);
+        ArrayList<Integer> userSignInRecord = userService.getUserSignInRecord(loginUser.getId(), year);
+        return ResultUtils.success(userSignInRecord);
     }
 }
