@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.muyu.interview.common.BaseResponse;
+import com.muyu.interview.model.dto.question.QuestionBatchDeleteRequest;
 import com.muyu.interview.model.dto.question.QuestionQueryRequest;
 import com.muyu.interview.model.entity.Question;
 import com.muyu.interview.model.vo.QuestionVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 题目服务
@@ -67,4 +69,9 @@ public interface QuestionService extends IService<Question> {
      */
     Page<Question> searchFromEs(QuestionQueryRequest questionQueryRequest);
 
+    /**
+     * 批量删除题目
+     * @param questionIdList
+     */
+    void batchDeleteQuestions(List<Long> questionIdList);
 }

@@ -33,6 +33,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
@@ -66,7 +67,6 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     @Lazy
     @Resource
     private QuestionBankQuestionService questionBankQuestionService;
-
     @Resource
     private ElasticsearchRestTemplate elasticsearchRestTemplate;
     /**
@@ -187,9 +187,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
             return questionVOPage;
         }
         // 对象列表 => 封装对象列表
-        List<QuestionVO> questionVOList = questionList.stream().map(question -> {
-            return QuestionVO.objToVo(question);
-        }).collect(Collectors.toList());
+        List<QuestionVO> questionVOList = questionList.stream().map(question -> QuestionVO.objToVo(question)).collect(Collectors.toList());
 
         // todo 可以根据需要为封装对象补充值，不需要的内容可以删除
         // region 可选
@@ -237,6 +235,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
                         .map(QuestionBankQuestion::getQuestionId)
                         .collect(Collectors.toSet());
                 queryWrapper.in("id",questionIdSet);
+            }else {
+                // 题库为空，则返回空列表
+                return new Page<>(current, size,0);
             }
         }
         // 查询数据库
@@ -315,6 +316,18 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         }
         page.setRecords(resourceList);
         return page;
+    }
+
+    /**
+     * 批量删除题目
+     * @param questionIdList
+     */
+    @Override
+    public void batchDeleteQuestions(List<Long> questionIdList) {
+        ThrowUtils.throwIf(CollUtil.isEmpty(questionIdList),ErrorCode.PARAMS_ERROR,"要删除的题目列表不能为空");
+        QuestionService questionService = (QuestionService) AopContext.currentProxy();
+        boolean result = questionService.removeBatchByIds(questionIdList);
+        ThrowUtils.throwIf(!result,ErrorCode.OPERATION_ERROR,"删除题目失败");
     }
 
 

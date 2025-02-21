@@ -11,10 +11,7 @@ import com.muyu.interview.common.ResultUtils;
 import com.muyu.interview.constant.UserConstant;
 import com.muyu.interview.exception.BusinessException;
 import com.muyu.interview.exception.ThrowUtils;
-import com.muyu.interview.model.dto.questionbankquestion.QuestionBankQuestionAddRequest;
-import com.muyu.interview.model.dto.questionbankquestion.QuestionBankQuestionQueryRequest;
-import com.muyu.interview.model.dto.questionbankquestion.QuestionBankQuestionRemoveRequest;
-import com.muyu.interview.model.dto.questionbankquestion.QuestionBankQuestionUpdateRequest;
+import com.muyu.interview.model.dto.questionbankquestion.*;
 import com.muyu.interview.model.entity.QuestionBankQuestion;
 import com.muyu.interview.model.entity.User;
 import com.muyu.interview.model.vo.QuestionBankQuestionVO;
@@ -26,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 题库题目关联接口
@@ -213,6 +211,7 @@ public class QuestionBankQuestionController {
      * @return
      */
     @PostMapping("/remove")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> removeQuestionBankQuestion(@RequestBody QuestionBankQuestionRemoveRequest questionBankQuestionRemoveRequest) {
         ThrowUtils.throwIf(questionBankQuestionRemoveRequest == null,ErrorCode.PARAMS_ERROR);
         Long questionBankId = questionBankQuestionRemoveRequest.getQuestionBankId();
@@ -222,5 +221,36 @@ public class QuestionBankQuestionController {
                 .eq(QuestionBankQuestion::getQuestionId, questionId);
         boolean result = questionBankQuestionService.remove(lambdaQueryWrapper);
         return ResultUtils.success(result);
+    }
+
+    /**
+     * 批量添加题目到题库
+     * @param questionBankQuestionBatchAddRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/add/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> batchAddQuestionstoBank(@RequestBody QuestionBankQuestionBatchAddRequest questionBankQuestionBatchAddRequest,HttpServletRequest request) {
+        ThrowUtils.throwIf(questionBankQuestionBatchAddRequest == null,ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        Long questionBankId = questionBankQuestionBatchAddRequest.getQuestionBankId();
+        List<Long> questionIdList = questionBankQuestionBatchAddRequest.getQuestionIdList();
+        questionBankQuestionService.batchAddQuestionsToBank(questionIdList,questionBankId,loginUser);
+        return  ResultUtils.success(true);
+    }
+
+    /**
+     * 批量从题库移除题目
+     * @param questionBankQuestionBatchRemoveRequest
+     */
+    @PostMapping("/remove/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> batchRemoveQuestionsfromBank(@RequestBody QuestionBankQuestionBatchRemoveRequest questionBankQuestionBatchRemoveRequest) {
+        ThrowUtils.throwIf(questionBankQuestionBatchRemoveRequest == null,ErrorCode.PARAMS_ERROR);
+        Long questionBankId = questionBankQuestionBatchRemoveRequest.getQuestionBankId();
+        List<Long> questionIdList = questionBankQuestionBatchRemoveRequest.getQuestionIdList();
+        questionBankQuestionService.batchRemoveQuestionsfromBank(questionIdList,questionBankId);
+        return  ResultUtils.success(true);
     }
 }

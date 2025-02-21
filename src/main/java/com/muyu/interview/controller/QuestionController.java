@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyu.interview.annotation.AuthCheck;
+import com.muyu.interview.annotation.HotKeyCache;
 import com.muyu.interview.common.BaseResponse;
 import com.muyu.interview.common.DeleteRequest;
 import com.muyu.interview.common.ErrorCode;
@@ -14,10 +15,8 @@ import com.muyu.interview.common.ResultUtils;
 import com.muyu.interview.constant.UserConstant;
 import com.muyu.interview.exception.BusinessException;
 import com.muyu.interview.exception.ThrowUtils;
-import com.muyu.interview.model.dto.question.QuestionAddRequest;
-import com.muyu.interview.model.dto.question.QuestionEditRequest;
-import com.muyu.interview.model.dto.question.QuestionQueryRequest;
-import com.muyu.interview.model.dto.question.QuestionUpdateRequest;
+import com.muyu.interview.model.dto.question.*;
+import com.muyu.interview.model.entity.Post;
 import com.muyu.interview.model.entity.Question;
 import com.muyu.interview.model.entity.QuestionBankQuestion;
 import com.muyu.interview.model.entity.User;
@@ -67,6 +66,11 @@ public class QuestionController {
         // todo 在此处将实体类和 DTO 进行转换
         Question question = new Question();
         BeanUtils.copyProperties(questionAddRequest, question);
+        List<String> tags = questionAddRequest.getTags();
+        // list 转 string
+        if (tags != null) {
+            question.setTags(JSONUtil.toJsonStr(tags));
+        }
         // 数据校验
         questionService.validQuestion(question, true);
         // todo 填充默认值
@@ -123,6 +127,10 @@ public class QuestionController {
         // todo 在此处将实体类和 DTO 进行转换
         Question question = new Question();
         BeanUtils.copyProperties(questionUpdateRequest, question);
+        List<String> tags = questionUpdateRequest.getTags();
+        if (tags != null) {
+            question.setTags(JSONUtil.toJsonStr(tags));
+        }
         // 数据校验
         questionService.validQuestion(question, false);
         // 判断是否存在
@@ -142,6 +150,7 @@ public class QuestionController {
      * @return
      */
     @GetMapping("/get/vo")
+    @HotKeyCache(prefix = "question_detail_")
     public BaseResponse<QuestionVO> getQuestionVOById(long id, HttpServletRequest request) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         // 查询数据库
@@ -258,4 +267,11 @@ public class QuestionController {
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
 
+    @PostMapping("/delete/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> batchDeleteQuestion(@RequestBody QuestionBatchDeleteRequest questionBatchDeleteRequest) {
+        ThrowUtils.throwIf(questionBatchDeleteRequest == null,ErrorCode.PARAMS_ERROR);
+        questionService.batchDeleteQuestions(questionBatchDeleteRequest.getQuestionIdList());
+        return ResultUtils.success(true);
+    }
 }
