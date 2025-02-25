@@ -11,4 +11,7 @@ import java.lang.annotation.Target;
 public @interface HotKeyCache {
     // 热 key 的前缀
     String prefix() default "";
+
+    // 用于生成缓存键的字段名
+    String field() default "id";  // 默认为空，表示使用id字段
 }

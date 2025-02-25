@@ -2,11 +2,15 @@ package com.muyu.interview.aop;
 
 import com.jd.platform.hotkey.client.callback.JdHotKeyStore;
 import com.muyu.interview.annotation.HotKeyCache;
+import com.muyu.interview.common.ErrorCode;
+import com.muyu.interview.exception.BusinessException;
 import com.muyu.interview.model.dto.questionbank.QuestionBankQueryRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Field;
 
 @Aspect
 @Component
@@ -17,22 +21,24 @@ public class HotKeyInterceptor {
         // 获取方法的参数
         Object[] args = joinPoint.getArgs();
 
-        // 从方法参数中获取 `questionBankQueryRequest` 或者是传递的其他参数
-        QuestionBankQueryRequest questionBankQueryRequest = null;
+        String key = null;
+
+        // 获取指定字段名
+        String fieldName = hotKeyCache.field();
+
+        // 如果指定了字段名，则使用反射获取该字段
         for (Object arg : args) {
-            if (arg instanceof QuestionBankQueryRequest) {
-                questionBankQueryRequest = (QuestionBankQueryRequest) arg;
+            Field field = arg.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            Object value = field.get(arg);
+            if (value != null) {
+                key = (hotKeyCache.prefix() + value).trim();  // 生成缓存键
                 break;
             }
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
 
-        if (questionBankQueryRequest == null) {
-            throw new IllegalArgumentException("Missing required parameter: QuestionBankQueryRequest");
-        }
 
-        // 生成缓存 key，使用注解的prefix作为前缀（如果有的话），否则默认使用id
-        Long id = questionBankQueryRequest.getId();
-        String key = (hotKeyCache.prefix() + id).trim();
 
         // 如果是热key，则尝试从缓存中获取
         if (JdHotKeyStore.isHotKey(key)) {
