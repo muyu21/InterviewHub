@@ -16,7 +16,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
-@Component
+// todo 取消注释开启 Nacos（须先配置 Nacos）
+//@Component
 public class NacosListener implements InitializingBean {
 
     @NacosInjected

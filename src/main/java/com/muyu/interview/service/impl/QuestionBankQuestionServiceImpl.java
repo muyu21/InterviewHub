@@ -1,6 +1,7 @@
 package com.muyu.interview.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -218,7 +219,6 @@ public class QuestionBankQuestionServiceImpl extends ServiceImpl<QuestionBankQue
         List<Long> validQuestionIdList = questionService.listObjs(questionLambdaQueryWrapper, obj -> (Long) obj);
         ThrowUtils.throwIf(CollUtil.isEmpty(validQuestionIdList), ErrorCode.PARAMS_ERROR, "合法的题目列表为空");
 
-        ThrowUtils.throwIf(CollUtil.isEmpty(validQuestionIdList), ErrorCode.PARAMS_ERROR, "合法的题目列表为空");
         // 检查题库 id 是否存在
         QuestionBank questionBank = questionBankService.getById(questionBankId);
         ThrowUtils.throwIf(questionBank == null, ErrorCode.PARAMS_ERROR, "题库不存在");
@@ -278,11 +278,11 @@ public class QuestionBankQuestionServiceImpl extends ServiceImpl<QuestionBankQue
                     throw new BusinessException(ErrorCode.OPERATION_ERROR, "向题库添加题目失败");
                 }
             }, customExcutor));
-            // 等待所有批次完成操作
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-            // 关闭线程池
-            customExcutor.shutdown();
         }
+        // 等待所有批次完成操作
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        // 关闭线程池
+        customExcutor.shutdown();
     }
 
     /**
@@ -322,13 +322,11 @@ public class QuestionBankQuestionServiceImpl extends ServiceImpl<QuestionBankQue
         ThrowUtils.throwIf(CollUtil.isEmpty(questionIdList), ErrorCode.PARAMS_ERROR, "题目列表不能为空");
         ThrowUtils.throwIf(questionBankId <= 0, ErrorCode.PARAMS_ERROR, "题库id非法");
         // 执行删除逻辑
-        for (long questionId : questionIdList) {
-            LambdaQueryWrapper<QuestionBankQuestion> lambdaQueryWrapper = Wrappers.lambdaQuery(QuestionBankQuestion.class)
-                    .eq(QuestionBankQuestion::getQuestionId, questionId)
-                    .eq(QuestionBankQuestion::getQuestionBankId, questionBankId);
-            boolean result = this.remove(lambdaQueryWrapper);
-            ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "从题库移除题目失败");
-        }
+        LambdaQueryWrapper<QuestionBankQuestion> lambdaQueryWrapper = Wrappers.lambdaQuery(QuestionBankQuestion.class)
+                .eq(QuestionBankQuestion::getQuestionBankId, questionBankId)
+                .in(QuestionBankQuestion::getQuestionId, questionIdList);
+        boolean result = this.remove(lambdaQueryWrapper);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "从题库移除题目失败");
     }
 
 

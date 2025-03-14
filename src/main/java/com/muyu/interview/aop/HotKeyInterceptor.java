@@ -51,7 +51,7 @@ public class HotKeyInterceptor {
         // 如果缓存没有命中，则执行目标方法
         Object result = joinPoint.proceed();
 
-        // 方法执行完成后，将结果存入缓存
+        // 设置本地缓存（如果不是热 key，这个方法不会设置缓存）
         if (result != null) {
             JdHotKeyStore.smartSet(key, result);  // 将结果存入缓存
         }

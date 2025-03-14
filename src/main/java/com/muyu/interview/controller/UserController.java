@@ -1,6 +1,7 @@
 package com.muyu.interview.controller;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.muyu.interview.annotation.AuthCheck;
 import com.muyu.interview.common.BaseResponse;
@@ -11,12 +12,7 @@ import com.muyu.interview.config.WxOpenConfig;
 import com.muyu.interview.constant.UserConstant;
 import com.muyu.interview.exception.BusinessException;
 import com.muyu.interview.exception.ThrowUtils;
-import com.muyu.interview.model.dto.user.UserAddRequest;
-import com.muyu.interview.model.dto.user.UserLoginRequest;
-import com.muyu.interview.model.dto.user.UserQueryRequest;
-import com.muyu.interview.model.dto.user.UserRegisterRequest;
-import com.muyu.interview.model.dto.user.UserUpdateMyRequest;
-import com.muyu.interview.model.dto.user.UserUpdateRequest;
+import com.muyu.interview.model.dto.user.*;
 import com.muyu.interview.model.entity.User;
 import com.muyu.interview.model.vo.LoginUserVO;
 import com.muyu.interview.model.vo.UserVO;
@@ -45,6 +41,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import static com.muyu.interview.constant.UserConstant.USER_LOGIN_STATE;
 import static com.muyu.interview.service.impl.UserServiceImpl.SALT;
 
 /**
@@ -219,6 +216,35 @@ public class UserController {
         }
         User user = new User();
         BeanUtils.copyProperties(userUpdateRequest, user);
+        boolean result = userService.updateById(user);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        // 2. 如果该用户在线，更新其 Sa-Token 缓存
+        Long userId = user.getId();
+        if (StpUtil.isLogin(userId)) {
+            // 获取最新用户信息
+            User updatedUser = userService.getById(userId);
+            // 更新用户会话信息
+            StpUtil.getSessionByLoginId(userId).set(USER_LOGIN_STATE, updatedUser);
+        }
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * 用户编辑资料
+     * @param userEditRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/edit")
+    public  BaseResponse<Boolean> editUser(@RequestBody UserEditRequest userEditRequest, HttpServletRequest request) {
+        if (userEditRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User user = new User();
+        BeanUtils.copyProperties(userEditRequest, user);
+        // 获取登录用户
+        User loginUser = userService.getLoginUser(request);
+        user.setId(loginUser.getId());
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);

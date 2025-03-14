@@ -144,7 +144,8 @@ public class QuestionBankController {
      * @return
      */
     @GetMapping("/get/vo")
-    @HotKeyCache(prefix = "bank_detail_")
+    // todo 取消注释开启 HotKey（须确保 HotKey 依赖被打进 jar 包）
+//    @HotKeyCache(prefix = "bank_detail_")
     public BaseResponse<QuestionBankVO> getQuestionBankVOById(QuestionBankQueryRequest questionBankQueryRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(questionBankQueryRequest == null, ErrorCode.PARAMS_ERROR);
         Long id = questionBankQueryRequest.getId();

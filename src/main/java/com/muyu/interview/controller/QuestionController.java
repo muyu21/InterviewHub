@@ -3,6 +3,7 @@ package com.muyu.interview.controller;
 import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.EntryType;
@@ -374,7 +375,11 @@ public class QuestionController {
         long size = questionQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 200, ErrorCode.PARAMS_ERROR);
-        Page<Question> questionPage = questionService.searchFromEs(questionQueryRequest);
+        // todo 取消注释开启 ES（须先配置 ES）
+        // 查询 ES
+        // Page<Question> questionPage = questionService.searchFromEs(questionQueryRequest);
+        // 查询数据库（作为没有 ES 的降级方案）
+        Page<Question> questionPage = questionService.listQuestionByPage(questionQueryRequest);
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
 
@@ -384,5 +389,26 @@ public class QuestionController {
         ThrowUtils.throwIf(questionBatchDeleteRequest == null,ErrorCode.PARAMS_ERROR);
         questionService.batchDeleteQuestions(questionBatchDeleteRequest.getQuestionIdList());
         return ResultUtils.success(true);
+    }
+
+    /**
+     * AI生成题目(仅管理员可用)
+     * @param questionAIGenerateRequest AI生成题目请求
+     * @param request HTTP 请求
+     * @return是否生成成功
+     */
+    @PostMapping("/ai/generate/question")
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> aiGenerateQuestions(@RequestBody QuestionAIGenerateRequest questionAIGenerateRequest, HttpServletRequest request) {
+        String questionType = questionAIGenerateRequest.getQuestionType();
+        int number = questionAIGenerateRequest.getNumber();
+        // 参数校验
+        ThrowUtils.throwIf(StrUtil.isBlank(questionType),ErrorCode.PARAMS_ERROR,"题目类型不能为空");
+        ThrowUtils.throwIf(number <= 0,ErrorCode.PARAMS_ERROR,"题目数量不能小于等于0");
+        User loginUser = userService.getLoginUser(request);
+
+        // 调用 ai 生成题目服务
+        boolean result = questionService.aiGenerateQuestion(questionType, number, loginUser);
+        return ResultUtils.success(result);
     }
 }

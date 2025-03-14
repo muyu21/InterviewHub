@@ -1,27 +1,15 @@
-package com.muyu.interview.model.entity;
+package com.muyu.interview.model.dto.user;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.util.Date;
 import lombok.Data;
 
-/**
- * 用户
- *
- */
-@TableName(value = "user")
-@Data
-public class User implements Serializable {
+import java.io.Serializable;
+import java.util.Date;
 
-    /**
-     * id
-     */
-    @TableId(type = IdType.ASSIGN_ID)
-    private Long id;
+/**
+ * 用户编辑资料请求
+ */
+@Data
+public class UserEditRequest implements Serializable {
 
     /**
      * 用户账号
@@ -64,21 +52,6 @@ public class User implements Serializable {
     private String userRole;
 
     /**
-     * 编辑时间
-     */
-    private Date editTime;
-
-    /**
-     * 创建时间
-     */
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
-
-    /**
      * 手机号
      */
     private String phoneNumber;
@@ -103,12 +76,6 @@ public class User implements Serializable {
      */
     private String expertiseDirection;
 
-    /**
-     * 是否删除
-     */
-    @TableLogic
-    private Integer isDelete;
 
-    @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

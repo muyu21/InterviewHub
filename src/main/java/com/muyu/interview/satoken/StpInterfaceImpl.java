@@ -1,10 +1,13 @@
 package com.muyu.interview.satoken;
 
+import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpInterface;
 import cn.dev33.satoken.stp.StpUtil;
 import com.muyu.interview.model.entity.User;
+import com.muyu.interview.service.UserService;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,6 +17,8 @@ import static com.muyu.interview.constant.UserConstant.USER_LOGIN_STATE;
 @Component // 保证此类被 SpringBoot 扫描，完成 Sa-Token 的自定义权限验证扩展
 public class StpInterfaceImpl implements StpInterface {
 
+    @Resource
+    private UserService userService;
     /**
      * 返回一个账号所拥有的权限码集合 (目前没用)
      */
@@ -28,7 +33,8 @@ public class StpInterfaceImpl implements StpInterface {
     @Override
     public List<String> getRoleList(Object loginId, String s) {
         // 从当前登录用户信息中获取角色
-        User user = (User) StpUtil.getSessionByLoginId(loginId).get(USER_LOGIN_STATE);
+//        User user = (User) StpUtil.getSessionByLoginId(loginId).get(USER_LOGIN_STATE);
+        User user = userService.getById((String) loginId);
         return Collections.singletonList(user.getUserRole());
     }
 }

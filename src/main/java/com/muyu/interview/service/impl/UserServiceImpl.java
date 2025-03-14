@@ -68,6 +68,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
+        // String.intern()是一个native（本地）方法，用于将字符串添加到字符串常量池中，并返回该字符串的引用。
         synchronized (userAccount.intern()) {
             // 账户不能重复
             QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -118,6 +119,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 //        request.getSession().setAttribute(USER_LOGIN_STATE, user);
 
         // 使用 Sa-Token 登录，并指定设备，同端登录互斥
+        // Sa-Token 使用 TokenSession 来存储用户的登录状态，每个 TokenSession 记录了：
+        // 用户 ID
+        // Token 值
+        // 设备标识（Device，如 "pc", "mobile", "miniProgram"）
+        // Session 绑定的数据
         StpUtil.login(user.getId(), DeviceUtils.getRequestDevice(request));
         StpUtil.getSession().set(USER_LOGIN_STATE,user);
         return this.getLoginUserVO(user);
@@ -162,7 +168,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return
      */
     @Override
-    public User getLoginUser(HttpServletRequest request) {
+        public User getLoginUser(HttpServletRequest request) {
         // 先判断是否已登录
 //      Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         Object loginUserId = StpUtil.getLoginIdDefaultNull();
@@ -210,7 +216,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public boolean isAdmin(HttpServletRequest request) {
         // 仅管理员可查询
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        // 基于Sa-Token改造
+        Object userObj = StpUtil.getSession().get(USER_LOGIN_STATE);
+//        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User user = (User) userObj;
         return isAdmin(user);
     }

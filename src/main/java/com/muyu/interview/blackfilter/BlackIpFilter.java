@@ -10,7 +10,7 @@ import java.io.IOException;
 /**
  * 全局 IP 黑名单过滤请求拦截器
  */
-@WebFilter(urlPatterns = "/*", filterName = "blackIpFilter")
+//@WebFilter(urlPatterns = "/*", filterName = "blackIpFilter")
 public class BlackIpFilter implements Filter {
 
     @Override

@@ -7,6 +7,7 @@ import com.muyu.interview.common.BaseResponse;
 import com.muyu.interview.model.dto.question.QuestionBatchDeleteRequest;
 import com.muyu.interview.model.dto.question.QuestionQueryRequest;
 import com.muyu.interview.model.entity.Question;
+import com.muyu.interview.model.entity.User;
 import com.muyu.interview.model.vo.QuestionVO;
 
 import javax.servlet.http.HttpServletRequest;
@@ -59,7 +60,7 @@ public interface QuestionService extends IService<Question> {
      * @param questionQueryRequest
      * @return
      */
-    Page<Question> listQuestionByPage(QuestionQueryRequest questionQueryRequest);
+    Page<Question>   listQuestionByPage(QuestionQueryRequest questionQueryRequest);
 
     /**
      * 从 ES 查询题目
@@ -74,4 +75,21 @@ public interface QuestionService extends IService<Question> {
      * @param questionIdList
      */
     void batchDeleteQuestions(List<Long> questionIdList);
+
+    /**
+     * AI 生成题目
+     *
+     * @param questionType 题目类型，比如 Java
+     * @param number       题目数量，比如 10
+     * @param user
+     * @return true / false
+     */
+    boolean aiGenerateQuestion(String questionType, int number, User user);
+
+    /**
+     * ai 生成题解
+     * @param questionTitle
+     * @return
+     */
+    String aiGenerateQuestionAnswer(String questionTitle);
 }
